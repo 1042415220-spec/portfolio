@@ -17,7 +17,7 @@ function setMode(nextMode) {
 }
 
 function prepareVideo(layer) {
-  const video = layer?.querySelector('video');
+  const video = layer?.querySelector('video.media:not(.media-hires)');
   if (!video) return null;
   if (!video.src && video.dataset.src) {
     video.src = video.dataset.src;
@@ -26,10 +26,41 @@ function prepareVideo(layer) {
   return video;
 }
 
+function releaseHighRes(layer) {
+  const high = layer?.querySelector('video.media-hires');
+  if (!high) return;
+  high.pause();
+  high.removeAttribute('src');
+  high.load();
+  high.remove();
+}
+
+function upgradeToHighRes(layer, baseVideo) {
+  const source = baseVideo?.dataset.hires;
+  if (!layer || !baseVideo || !source || layer.querySelector('.media-hires')) return;
+
+  const high = document.createElement('video');
+  high.className = 'media media-hires';
+  high.muted = true;
+  high.loop = true;
+  high.playsInline = true;
+  high.preload = 'auto';
+  high.src = source;
+  high.addEventListener('canplay', () => {
+    if (mode !== 'detail' || activeWork !== layer.dataset.work) return;
+    high.currentTime = baseVideo.currentTime || 0;
+    high.classList.add('is-ready');
+    high.play().catch(() => {});
+  }, { once: true });
+  layer.querySelector('.media-frame')?.appendChild(high);
+  high.load();
+}
+
 function pauseAll(except) {
   layers.forEach(layer => {
-    const video = layer.querySelector('video');
-    if (video && video !== except) video.pause();
+    layer.querySelectorAll('video').forEach(video => {
+      if (video !== except) video.pause();
+    });
   });
 }
 
@@ -46,11 +77,15 @@ function playActive(restart = false) {
   loadTimer = setTimeout(() => {
     const video = prepareVideo(layers.get(activeWork));
     if (!video) return;
-    if (loadedVideo && loadedVideo !== video) releaseVideo(loadedVideo);
+    if (loadedVideo && loadedVideo !== video) {
+      releaseVideo(loadedVideo);
+      releaseHighRes(loadedVideo.closest('.media-layer'));
+    }
     loadedVideo = video;
     pauseAll(video);
     if (restart) video.currentTime = 0;
     video.play().catch(() => {});
+    if (mode === 'detail') upgradeToHighRes(layers.get(activeWork), video);
   }, delay);
 }
 
@@ -98,6 +133,7 @@ items.forEach(item => {
 });
 
 function backToList() {
+  releaseHighRes(layers.get(activeWork));
   setMode('list');
   const current = items.find(item => item.dataset.work === activeWork);
   current?.focus({ preventScroll: true });
