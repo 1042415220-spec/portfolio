@@ -38,6 +38,12 @@ function releaseHighRes(layer) {
 function upgradeToHighRes(layer, baseVideo) {
   const source = baseVideo?.dataset.hires;
   if (!layer || !baseVideo || !source || layer.querySelector('.media-hires')) return;
+  const basePath = new URL(baseVideo.currentSrc || baseVideo.src, location.href).pathname;
+  const highPath = new URL(source, location.href).pathname;
+  if (highPath === basePath) {
+    baseVideo.classList.add('is-ready');
+    return;
+  }
 
   const high = document.createElement('video');
   high.className = 'media media-hires';
