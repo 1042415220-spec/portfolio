@@ -9,6 +9,7 @@ let mode = 'list';
 let rafId = null;
 let loadTimer = null;
 let loadedVideo = null;
+let playRequest = 0;
 
 function setMode(nextMode) {
   mode = nextMode;
@@ -35,6 +36,17 @@ function releaseHighRes(layer) {
   high.remove();
 }
 
+function playWhenReady(video, request) {
+  const play = () => {
+    if (request !== playRequest || !video.isConnected || video.closest('.media-layer')?.dataset.work !== activeWork) return;
+    video.play().catch(() => {});
+  };
+  // A video whose source has just been assigned can reject play() while its
+  // metadata is still loading. Try again as soon as frames are available.
+  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) play();
+  else video.addEventListener('canplay', play, { once: true });
+}
+
 function upgradeToHighRes(layer, baseVideo) {
   const source = baseVideo?.dataset.hires;
   if (!layer || !baseVideo || !source || layer.querySelector('.media-hires')) return;
@@ -54,10 +66,10 @@ function upgradeToHighRes(layer, baseVideo) {
   high.src = source;
   high.addEventListener('canplay', () => {
     if (mode !== 'detail' || activeWork !== layer.dataset.work) return;
-    high.currentTime = baseVideo.currentTime || 0;
-    high.classList.add('is-ready');
+    high.currentTime = Math.min(baseVideo.currentTime || 0, Math.max(0, high.duration - .1));
     high.play().catch(() => {});
   }, { once: true });
+  high.addEventListener('playing', () => high.classList.add('is-ready'), { once: true });
   layer.querySelector('.media-frame')?.appendChild(high);
   high.load();
 }
@@ -79,18 +91,28 @@ function releaseVideo(video) {
 
 function playActive(restart = false) {
   clearTimeout(loadTimer);
-  const delay = mode === 'detail' ? 0 : 180;
+  const request = ++playRequest;
+  const delay = mode === 'detail' ? 0 : 90;
   loadTimer = setTimeout(() => {
+    if (request !== playRequest) return;
     const video = prepareVideo(layers.get(activeWork));
-    if (!video) return;
+    if (!video) {
+      pauseAll(null);
+      if (loadedVideo) {
+        releaseVideo(loadedVideo);
+        releaseHighRes(loadedVideo.closest('.media-layer'));
+      }
+      loadedVideo = null;
+      return;
+    }
     if (loadedVideo && loadedVideo !== video) {
       releaseVideo(loadedVideo);
       releaseHighRes(loadedVideo.closest('.media-layer'));
     }
     loadedVideo = video;
     pauseAll(video);
-    if (restart) video.currentTime = 0;
-    video.play().catch(() => {});
+    if (restart && video.readyState) video.currentTime = 0;
+    playWhenReady(video, request);
     if (mode === 'detail') upgradeToHighRes(layers.get(activeWork), video);
   }, delay);
 }
@@ -141,6 +163,7 @@ items.forEach(item => {
 function backToList() {
   releaseHighRes(layers.get(activeWork));
   setMode('list');
+  playActive();
   const current = items.find(item => item.dataset.work === activeWork);
   current?.focus({ preventScroll: true });
 }
