@@ -7,6 +7,8 @@ const closeButton = document.getElementById('closeBtn');
 let activeWork = 'profile';
 let mode = 'list';
 let rafId = null;
+let loadTimer = null;
+let loadedVideo = null;
 
 function setMode(nextMode) {
   mode = nextMode;
@@ -31,12 +33,25 @@ function pauseAll(except) {
   });
 }
 
+function releaseVideo(video) {
+  if (!video || !video.src) return;
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+}
+
 function playActive(restart = false) {
-  const video = prepareVideo(layers.get(activeWork));
-  pauseAll(video);
-  if (!video) return;
-  if (restart) video.currentTime = 0;
-  video.play().catch(() => {});
+  clearTimeout(loadTimer);
+  const delay = mode === 'detail' ? 0 : 180;
+  loadTimer = setTimeout(() => {
+    const video = prepareVideo(layers.get(activeWork));
+    if (!video) return;
+    if (loadedVideo && loadedVideo !== video) releaseVideo(loadedVideo);
+    loadedVideo = video;
+    pauseAll(video);
+    if (restart) video.currentTime = 0;
+    video.play().catch(() => {});
+  }, delay);
 }
 
 function activate(work) {
