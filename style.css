@@ -24,7 +24,6 @@ body.is-detail .media-layer.is-active .media-frame { opacity: .92; }
 video.media { background: #050505; }
 .media-hires { opacity: 0; transition: opacity .35s ease; pointer-events: none; }
 .media-hires.is-ready { opacity: 1; }
-.media-layer[data-work="benz"] video.media { object-fit: contain; }
 
 .portrait-frame { opacity: .32; background: linear-gradient(90deg,#050505 0%,transparent 48%,#050505 100%); }
 .portrait-media { object-position: center 32%; filter: saturate(.76) contrast(1.07); }
