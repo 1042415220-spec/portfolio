@@ -14,6 +14,7 @@ let playRequest = 0;
 function setMode(nextMode) {
   mode = nextMode;
   body.classList.toggle('is-detail', nextMode === 'detail');
+  body.classList.toggle('is-profile-detail', nextMode === 'detail' && activeWork === 'profile');
   if (nextMode === 'detail') playActive(true);
 }
 
