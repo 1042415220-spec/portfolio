@@ -26,7 +26,7 @@ video.media { background: #050505; }
 .media-hires.is-ready { opacity: 1; }
 
 .portrait-frame { opacity: .32; background: linear-gradient(90deg,#050505 0%,transparent 48%,#050505 100%); }
-.portrait-media { object-position: center 32%; filter: saturate(.76) contrast(1.07); }
+.portrait-media { object-position: center 32%; }
 .profile-layer .portrait-frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg,rgba(5,5,5,.78),rgba(5,5,5,.12) 48%,rgba(5,5,5,.46)); }
 body.is-detail .profile-layer.is-active .portrait-frame { opacity: .34; }
 
@@ -45,17 +45,16 @@ body.is-ready .fixed-label { opacity: 1; }
 .fixed-label-top h1 { margin: 0; font-size: clamp(.98rem,1.55vw,1.12rem); font-weight: 600; letter-spacing: -.025em; line-height: 1.2; }
 .fixed-label-top h1 span { font-weight: 400; }
 .fixed-label-top p { margin: 2px 0 0; font-size: clamp(.78rem,1.3vw,.94rem); line-height: 1.3; font-weight: 400; }
-.fixed-label-top small { display: block; margin-top: 5px; font-size: .56rem; letter-spacing: .105em; color: var(--muted); }
 .fixed-label-bottom { bottom: 22px; font-size: .58rem; letter-spacing: .14em; color: rgba(255,255,255,.58); }
 body.is-detail .fixed-label-bottom { opacity: 0; }
 
 .list-mask { position: fixed; inset: 0; z-index: 3; opacity: 0; pointer-events: none; mask-image: linear-gradient(to bottom,transparent 0%,#000 14%,#000 86%,transparent 100%); -webkit-mask-image: linear-gradient(to bottom,transparent 0%,#000 14%,#000 86%,transparent 100%); transition: opacity .85s ease; }
 body.is-ready .list-mask { opacity: 1; }
 body.is-detail .list-mask { opacity: 0; }
-.project-list { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; overflow-y: auto; overflow-x: hidden; padding-block: 50svh; scroll-snap-type: y proximity; scrollbar-width: none; pointer-events: auto; user-select: none; }
+.project-list { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; overflow-y: auto; overflow-x: hidden; padding-block: 50svh; scroll-snap-type: y mandatory; scrollbar-width: none; pointer-events: auto; user-select: none; }
 .project-list::-webkit-scrollbar { display: none; }
 body.is-detail .project-list { pointer-events: none; }
-.project-item { flex: none; display: block; border: 0; padding: 1px 12px; background: transparent; color: var(--text); font-family: var(--font); font-size: clamp(1.48rem,4.4vw,3.45rem); font-weight: 300; line-height: 1.08; letter-spacing: -.035em; white-space: nowrap; opacity: .24; cursor: pointer; scroll-snap-align: center; transform: translateY(15px); animation: item-in 1.2s var(--ease) forwards; animation-delay: var(--delay); transition: opacity .28s ease,letter-spacing .45s var(--ease),font-weight .28s ease; }
+.project-item { flex: none; display: block; border: 0; padding: 1px 12px; background: transparent; color: var(--text); font-family: var(--font); font-size: clamp(1.48rem,4.4vw,3.45rem); font-weight: 300; line-height: 1.08; letter-spacing: -.035em; white-space: nowrap; opacity: .24; cursor: pointer; scroll-snap-align: center; scroll-snap-stop: always; transform: translateY(15px); animation: item-in 1.2s var(--ease) forwards; animation-delay: var(--delay); transition: opacity .28s ease,letter-spacing .45s var(--ease),font-weight .28s ease; }
 .project-item.is-active { opacity: 1; letter-spacing: -.045em; font-weight: 400; }
 .project-item.profile-item::after { content: "  —  CV / CAPABILITIES"; font-size: .34em; letter-spacing: .12em; vertical-align: middle; color: rgba(255,255,255,.66); }
 .project-item:focus-visible { outline: 1px solid rgba(255,255,255,.7); outline-offset: 4px; }
@@ -66,7 +65,6 @@ body.is-detail .media-layer.is-active .caption { opacity: 1; pointer-events: aut
 .caption > p { width: min(520px,100%); margin: 0; }
 .caption strong { font-weight: 600; }
 .credit { position: absolute; left: 24px; right: 24px; bottom: 76px; font-size: .6rem; line-height: 1.4; letter-spacing: .07em; text-transform: uppercase; }
-.power-layer .credit { top: 92px; bottom: auto; text-align: left; }
 
 .reveal { opacity: 0; transform: translateY(10px); filter: blur(5px); }
 body.is-detail .media-layer.is-active .reveal { animation: reveal .9s var(--ease) forwards; }
@@ -80,10 +78,12 @@ body.is-detail .media-layer.is-active .credit { animation-delay: .2s; }
 .profile-topbar-note { font-size: .68rem; letter-spacing: .08em; }
 .profile-layout { display: grid; grid-template-columns: minmax(240px,340px) minmax(0,1fr); gap: clamp(38px,6vw,90px); align-items: start; margin-top: clamp(54px,9vh,98px); }
 .profile-photo { margin: 73px 0 0; }
-.profile-photo img { display: block; width: 100%; height: clamp(330px,51vh,440px); object-fit: cover; object-position: center 52%; filter: grayscale(1) contrast(1.04); }
+.profile-photo img { display: block; width: 100%; height: clamp(330px,51vh,440px); object-fit: cover; object-position: center 52%; }
 .profile-photo figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-top: 13px; font-size: clamp(1.35rem,2.3vw,2rem); letter-spacing: -.04em; }
 .profile-photo figcaption span { font-family: Calibri, Arial, sans-serif; font-size: .65em; letter-spacing: -.015em; }
 .profile-content h2 { margin: 0 0 26px; font-family: Calibri, Arial, sans-serif; font-size: clamp(2.8rem,5.5vw,4.8rem); line-height: .97; font-weight: 400; letter-spacing: -.045em; }
+.profile-title-zh, .profile-title-en { display: block; }
+.profile-title-zh { margin-bottom: .55em; font-family: "Noto Sans SC", "Source Han Sans SC", "思源黑体", sans-serif; font-size: .36em; line-height: 1.1; letter-spacing: .04em; }
 .profile-section h3 { margin: 0 0 9px; font-family: Calibri, Arial, sans-serif; font-size: clamp(.96rem,1.45vw,1.18rem); line-height: 1.1; font-weight: 400; letter-spacing: .015em; }
 .profile-section p { margin: 0; font-size: clamp(.84rem,1.26vw,1rem); line-height: 1.7; }
 .profile-introduction { max-width: 660px; }
@@ -100,7 +100,6 @@ body.is-detail .close-btn { opacity: 1; pointer-events: auto; }
 
 @media (max-width: 760px) {
   .fixed-label-top { top: 20px; }
-  .fixed-label-top small { font-size: .5rem; }
   .project-item { max-width: 94vw; white-space: normal; text-align: center; line-height: 1.13; padding-block: 3px; }
   .project-item.profile-item::after { display: block; margin-top: 4px; }
   .caption { padding: 28px; font-size: .84rem; }

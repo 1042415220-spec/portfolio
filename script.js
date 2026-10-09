@@ -7,6 +7,9 @@ const closeButton = document.getElementById('closeBtn');
 let activeWork = 'profile';
 let mode = 'list';
 let rafId = null;
+let hoverTimer = null;
+let hoveredWork = null;
+let centerTimer = null;
 let loadTimer = null;
 let loadedVideo = null;
 let playRequest = 0;
@@ -144,18 +147,43 @@ function updateFromCenter() {
 }
 
 list.addEventListener('scroll', () => {
-  if (!rafId) rafId = requestAnimationFrame(updateFromCenter);
+  clearTimeout(hoverTimer);
+  hoveredWork = null;
+  clearTimeout(centerTimer);
+  centerTimer = setTimeout(() => {
+    if (!rafId) rafId = requestAnimationFrame(updateFromCenter);
+  }, 90);
 }, { passive: true });
 
 list.addEventListener('pointermove', event => {
   if (mode !== 'list' || event.pointerType !== 'mouse') return;
   const item = event.target.closest('.project-item');
-  if (item) activate(item.dataset.work);
+  const work = item?.dataset.work;
+  if (!work || work === activeWork) {
+    clearTimeout(hoverTimer);
+    hoveredWork = null;
+    return;
+  }
+  if (hoveredWork === work) return;
+  clearTimeout(hoverTimer);
+  hoveredWork = work;
+  hoverTimer = setTimeout(() => {
+    if (mode === 'list' && hoveredWork === work) activate(work);
+    hoveredWork = null;
+  }, 130);
+});
+
+list.addEventListener('pointerleave', () => {
+  clearTimeout(hoverTimer);
+  hoveredWork = null;
 });
 
 items.forEach(item => {
   item.addEventListener('focus', () => activate(item.dataset.work));
   item.addEventListener('click', () => {
+    clearTimeout(hoverTimer);
+    clearTimeout(centerTimer);
+    hoveredWork = null;
     activate(item.dataset.work);
     setMode('detail');
   });
