@@ -8,12 +8,7 @@ let activeWork = 'profile';
 let mode = 'list';
 let hoverTimer = null;
 let hoveredWork = null;
-let wheelDelta = 0;
-let wheelResetTimer = null;
-let lastWheelStep = -Infinity;
-let lastWheelDirection = 0;
-let hoverBlockedUntil = 0;
-let touchStart = null;
+let scrollFrame = 0;
 let loadTimer = null;
 let loadedVideo = null;
 let playRequest = 0;
@@ -132,72 +127,30 @@ function activate(work) {
   body.classList.toggle('is-profile-active', mode === 'list' && work === 'profile');
   items.forEach(item => item.classList.toggle('is-active', item.dataset.work === work));
   layers.forEach((layer, key) => layer.classList.toggle('is-active', key === work));
-  centerActive();
   playActive(false);
 }
 
-function centerActive(immediate = false) {
-  const current = items.find(item => item.dataset.work === activeWork);
-  if (!current) return;
-  if (immediate) list.style.transition = 'none';
-  const center = current.offsetTop + current.offsetHeight / 2;
-  list.style.transform = `translate3d(0, ${Math.round(window.innerHeight / 2 - center)}px, 0)`;
-  if (immediate) requestAnimationFrame(() => { list.style.transition = ''; });
+function activateNearestVisible() {
+  if (mode !== 'list') return;
+  const center = window.innerHeight / 2;
+  const nearest = items.reduce((best, item) => {
+    const bounds = item.getBoundingClientRect();
+    const distance = Math.abs(bounds.top + bounds.height / 2 - center);
+    return distance < best.distance ? { item, distance } : best;
+  }, { item: items[0], distance: Infinity }).item;
+  activate(nearest.dataset.work);
 }
 
-function advanceWork(direction) {
-  const index = items.findIndex(item => item.dataset.work === activeWork);
-  const next = items[Math.max(0, Math.min(items.length - 1, index + direction))];
-  if (next && next.dataset.work !== activeWork) {
-    clearTimeout(hoverTimer);
-    hoveredWork = null;
-    hoverBlockedUntil = performance.now() + 680;
-    activate(next.dataset.work);
-  }
-}
-
-window.addEventListener('wheel', event => {
-  if (mode !== 'list' || !event.deltaY) return;
-  event.preventDefault();
-  const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1);
-  if (wheelDelta && Math.sign(wheelDelta) !== Math.sign(delta)) wheelDelta = 0;
-  wheelDelta += delta;
-  clearTimeout(wheelResetTimer);
-  wheelResetTimer = setTimeout(() => { wheelDelta = 0; }, 180);
-  const now = performance.now();
-  const direction = Math.sign(wheelDelta);
-  const cooldown = direction === lastWheelDirection ? 360 : 160;
-  if (Math.abs(wheelDelta) < 24 || now - lastWheelStep < cooldown) return;
-  lastWheelStep = now;
-  lastWheelDirection = direction;
-  advanceWork(direction);
-  wheelDelta = 0;
-}, { passive: false });
-
-window.addEventListener('touchstart', event => {
-  touchStart = mode === 'list' && event.touches.length === 1
-    ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
-    : null;
+window.addEventListener('scroll', () => {
+  if (mode !== 'list' || scrollFrame) return;
+  scrollFrame = requestAnimationFrame(() => {
+    scrollFrame = 0;
+    activateNearestVisible();
+  });
 }, { passive: true });
 
-window.addEventListener('touchmove', event => {
-  if (mode === 'list' && event.cancelable) event.preventDefault();
-}, { passive: false });
-
-window.addEventListener('touchend', event => {
-  if (!touchStart || !event.changedTouches.length || mode !== 'list') return;
-  const deltaY = touchStart.y - event.changedTouches[0].clientY;
-  const deltaX = touchStart.x - event.changedTouches[0].clientX;
-  touchStart = null;
-  if (Math.abs(deltaY) < 45 || Math.abs(deltaY) < Math.abs(deltaX) * 1.2) return;
-  event.preventDefault();
-  advanceWork(Math.sign(deltaY));
-}, { passive: false });
-
-window.addEventListener('touchcancel', () => { touchStart = null; }, { passive: true });
-
 list.addEventListener('pointermove', event => {
-  if (mode !== 'list' || event.pointerType !== 'mouse' || performance.now() < hoverBlockedUntil) return;
+  if (mode !== 'list' || event.pointerType !== 'mouse') return;
   const item = event.target.closest('.project-item');
   const work = item?.dataset.work;
   if (!work || work === activeWork) {
@@ -232,10 +185,7 @@ items.forEach(item => {
 function backToList() {
   releaseHighRes(layers.get(activeWork));
   setMode('list');
-  centerActive(true);
   playActive();
-  const current = items.find(item => item.dataset.work === activeWork);
-  current?.focus({ preventScroll: true });
 }
 
 closeButton.addEventListener('click', backToList);
@@ -244,15 +194,11 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && mode !== 'list') backToList();
   if (mode === 'list' && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
     event.preventDefault();
-    advanceWork(event.key === 'ArrowDown' ? 1 : -1);
+    window.scrollBy({ top: (event.key === 'ArrowDown' ? 1 : -1) * window.innerHeight * .28, behavior: 'smooth' });
   }
 });
 
-centerActive(true);
-window.addEventListener('resize', () => centerActive(true));
-document.fonts?.ready.then(() => centerActive(true));
 window.addEventListener('load', () => {
-  centerActive(true);
   requestAnimationFrame(() => {
     body.classList.add('is-ready');
   });
