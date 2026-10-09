@@ -10,6 +10,8 @@ let rafId = null;
 let hoverTimer = null;
 let hoveredWork = null;
 let centerTimer = null;
+let wheelGestureTimer = null;
+let wheelGestureActive = false;
 let loadTimer = null;
 let loadedVideo = null;
 let playRequest = 0;
@@ -18,6 +20,7 @@ function setMode(nextMode) {
   mode = nextMode;
   body.classList.toggle('is-detail', nextMode === 'detail');
   body.classList.toggle('is-profile-detail', nextMode === 'detail' && activeWork === 'profile');
+  body.classList.toggle('is-profile-active', nextMode === 'list' && activeWork === 'profile');
   if (nextMode === 'detail') playActive(true);
 }
 
@@ -124,6 +127,7 @@ function playActive(restart = false) {
 function activate(work) {
   if (!layers.has(work) || activeWork === work) return;
   activeWork = work;
+  body.classList.toggle('is-profile-active', mode === 'list' && work === 'profile');
   items.forEach(item => item.classList.toggle('is-active', item.dataset.work === work));
   layers.forEach((layer, key) => layer.classList.toggle('is-active', key === work));
   playActive(false);
@@ -147,13 +151,27 @@ function updateFromCenter() {
 }
 
 list.addEventListener('scroll', () => {
+  body.classList.add('is-scrolling');
   clearTimeout(hoverTimer);
   hoveredWork = null;
   clearTimeout(centerTimer);
   centerTimer = setTimeout(() => {
+    body.classList.remove('is-scrolling');
     if (!rafId) rafId = requestAnimationFrame(updateFromCenter);
   }, 90);
 }, { passive: true });
+
+list.addEventListener('wheel', event => {
+  if (mode !== 'list' || Math.abs(event.deltaY) < 3) return;
+  event.preventDefault();
+  clearTimeout(wheelGestureTimer);
+  wheelGestureTimer = setTimeout(() => { wheelGestureActive = false; }, 320);
+  if (wheelGestureActive) return;
+  wheelGestureActive = true;
+  const index = items.findIndex(item => item.dataset.work === activeWork);
+  const next = items[Math.max(0, Math.min(items.length - 1, index + Math.sign(event.deltaY)))];
+  next?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}, { passive: false });
 
 list.addEventListener('pointermove', event => {
   if (mode !== 'list' || event.pointerType !== 'mouse') return;
@@ -183,6 +201,7 @@ items.forEach(item => {
   item.addEventListener('click', () => {
     clearTimeout(hoverTimer);
     clearTimeout(centerTimer);
+    body.classList.remove('is-scrolling');
     hoveredWork = null;
     activate(item.dataset.work);
     setMode('detail');
